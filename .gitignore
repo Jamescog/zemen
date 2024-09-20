@@ -1,0 +1,4 @@
+# pychache
+
+__pycache__/
+*.pyc
