@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 This module provides functions for converting between Julian Day Number (JDN),
@@ -35,7 +35,7 @@ def _greg_to_jdn(*, year: int, month: int, day: int) -> int:
     return date(year, month, day).toordinal() + 1721425
 
 
-def jdn_to_greg(jdn: int) -> date:
+def _jdn_to_greg(jdn: int) -> date:
     """
     Convert Julian Day Number(JDN) to Gregorian date.
 
@@ -43,10 +43,7 @@ def jdn_to_greg(jdn: int) -> date:
 
     :return: Gregorian date
 
-    :raises ValueError: If the JDN is invalid
     """
-    if jdn < 1721425:
-        raise ValueError("Invalid Julian Day Number")
     return date.fromordinal(jdn - 1721425)
 
 
@@ -70,8 +67,18 @@ def _eth_from_jdn(jdn: int) -> tuple:
     n = (r % 365) + (365 * (r // 1460))
     year = 4 * ((jdn - JDN_ETH_OFFSET) // 1461) + (r // 365) - (r // 1460)
     month = n // 30 + 1
-    day = n % 30 + 2
+    day = n % 30 + 1
     return year, month, day
+
+
+def ethiopian_hour():
+    """
+    Get the current Ethiopian hour.
+
+    :return: Ethiopian hour
+    """
+    return (datetime.now(timezone.utc).hour + 6) % 12
+
 
 
 def eth_from_greg(*, year: int, month: int, day: int) -> tuple:
@@ -103,3 +110,20 @@ def eth_to_greg(*, year: int, month: int, day: int) -> tuple:
 
     :raises ValueError: If the date is invalid for Ethiopian calendar
     """
+    
+    JDN_ETH_OFFSET : int = 1723856
+
+    if not (1 <= month <= 13):
+        raise ValueError("Invalid Ethiopian month")
+    if not (1 <= day <= (30 if month <= 12 else 5 + isleap(year + 8))):
+        raise ValueError("Invalid Ethiopian day")
+    
+    jdn = ((JDN_ETH_OFFSET + 365)
+           + 365 * (year - 1)
+           + (year) // 4
+           + 30 * (month - 1)
+           + day
+           )
+
+    greg_date = jdn_to_greg(jdn)
+    return greg_date.year, greg_date.month, greg_date.day
